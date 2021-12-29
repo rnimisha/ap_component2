@@ -1,4 +1,4 @@
-﻿Euro (EUR), 1.06, €
+Euro (EUR), 1.06, €
 US Dollars (USD), 1.14, $
 Australian Dollars (AUD), 1.52, $
 Canadian Dollars (CAD),	1.77, $

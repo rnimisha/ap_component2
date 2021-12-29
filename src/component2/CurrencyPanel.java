@@ -21,11 +21,13 @@ public class CurrencyPanel extends JPanel{
 	
 	/*----- declaring  components -------*/
 	
-	/*String array of options for currency options available
+	/*list of Object of class Currency
 	 * one copy for all object of this class
-	 * static so value will be same for all instance */
-	private static String[] currencyOption = { "JPY","EUR","USD","AUD","CAD","KRW","THB","AED"};
+	 * will store all valid currency data from txt file*/
+	private static List<Currency> currencies;
 	private JComboBox<String> currencyComboBox; //option selection box
+	//object of File with default file name as parameter
+	private File currencyFile=new File("currency.txt");
 	
 	/*Button that will cause conversion action to be performed when clicked*/
 	private JButton convertButton;
@@ -41,8 +43,7 @@ public class CurrencyPanel extends JPanel{
 	private JCheckBox reverseBox;
 	/*will be set true if reverse option is selected*/
 	private boolean checked=false;
-	//object of File with default file name as parameter
-	private File currencyFile=new File("currency.txt");
+	
 	
 
 	/*----- Default constructor -------
@@ -50,7 +51,16 @@ public class CurrencyPanel extends JPanel{
 	 * this will be added to frame in Converter.java */
 	public CurrencyPanel()
 	{
+		//loading currency file at start
 		 loadCurrencyFile(currencyFile);
+		 
+		 //array of curreny abbrevation to be used in combobox
+		 String[] currencyOption=new String[currencies.size()];
+		 //converting list to array for combobox
+		 for(int i=0;i<currencyOption.length; i++)
+		 {
+			 currencyOption[i]=currencies.get(i).getName();
+		 }
 		/*add String array to combobox*/
 		currencyComboBox = new JComboBox<String>(currencyOption);
 		//add tooltip 
@@ -167,15 +177,15 @@ public class CurrencyPanel extends JPanel{
 			//using arraylist instead since array object will be fixed size and can get messy
 			/*list of Object of class Currency
 			 * will store all valid currency data from txt file*/
-			List<Currency> currencies = new ArrayList<Currency>();
+			currencies = new ArrayList<Currency>();
 //			Currency[] currencies= new Currency[8];
 			
 			//for storing error details of txt files
 			String errorMsg="";
 			//flag to check if txt file validation fails
-			boolean valid=true;
 			//loop till there is line available
 			while ( line != null ) {
+				boolean valid=false;
 				/*split line using , as delimiter
 				 * and save split data in array*/
 				String [] splitLine = line.split(",");
@@ -183,7 +193,7 @@ public class CurrencyPanel extends JPanel{
 				//check if 3 required data for each currency is present
 				if(splitLine.length!=3)
 				{
-					errorMsg+="The field delimiter may be missing or some data itself missing or wrong delimiter used in \n"+ line+"\n\\n";
+					errorMsg+="The field delimiter may be missing or some data itself missing or wrong delimiter used in \n"+ line+"\n\n";
 				}
 				else //checking further error when there is 3 array elements
 				{
@@ -204,35 +214,28 @@ public class CurrencyPanel extends JPanel{
 					{
 						//further validation
 						//check if conversion factor are in proper format
+						//exception handling while extracting abbrevation
 						try {
 							//convert string to double
 							factor=Double.parseDouble(rate);
+							
+							//extract abbrevation from name
+							//start index from after ( and end index is same of ) as it is exclusive
+							name = name.substring(name.indexOf("(") + 1, name.indexOf(")"));
+							/*-------after all validation tests are passed--------*/
+							currencies.add(new Currency(name, factor, sign));
+							valid=true;
 						}
 						catch(NumberFormatException e)
 						{
 							//add error message
-							errorMsg+="Conversion factor not in proper format in "+ line+"\n\\n";
-							valid=false;
-						}
-						//exception handling while extracting abbrevation
-						try{
-							//extract abbrevation from name
-							//start index from after ( and end index is same of ) as it is exclusive
-							name = name.substring(name.indexOf("(") + 1, name.indexOf(")"));
+							errorMsg+="Conversion factor not in proper format in "+ line+"\n\n";
 						}
 						catch (Exception e)
 						{
 							//add error message
-							errorMsg+="Currency name format invalid in  "+ line+"\n\\n";
-							valid=false;
+							errorMsg+=e+"\nCurrency name format invalid in  "+ line+"\n\n";
 						}
-					
-					}
-					
-					/*-------after all validation tests are passed--------*/
-					if(valid)
-					{
-						currencies.add(new Currency(name, factor, sign));
 					}
 				}
 
@@ -240,7 +243,6 @@ public class CurrencyPanel extends JPanel{
                 line = inReader.readLine();  
             }
             inReader.close();//close bufferReader
-            
             //show details about if any line in txt file was corrupted
             if(errorMsg!="")
             {
@@ -356,6 +358,12 @@ public class CurrencyPanel extends JPanel{
 				//change file name to selected file name
 				currencyFile=chooser.getSelectedFile();
 				loadCurrencyFile(currencyFile);
+				currencyComboBox.removeAllItems();
+				for(Currency c:currencies)
+				{
+					currencyComboBox.addItem(c.getName());
+				}
+				
 			}
 		});
 		
@@ -399,12 +407,15 @@ public class CurrencyPanel extends JPanel{
 				try {
 					//convert String to Double 
 					double numericAmount = Double.parseDouble(amount);
-					
-					double factor=0; //conversion factor
-					String symbol=""; //Symbol of currency
-					double result=0; //final result
+				
 					//check which option is selected according to index
-					switch(currencyComboBox.getSelectedIndex())
+					int index=currencyComboBox.getSelectedIndex();
+					//get factor and symbol for that index
+					double factor=currencies.get(index).getFactor();//conversion factor
+					String symbol=currencies.get(index).getSymbol();//Symbol of currency
+					double result=0; //final result
+					
+					/*switch(currencyComboBox.getSelectedIndex())
 					{
 						case 0: //Japanese Yen
 							factor=137.52;
@@ -438,7 +449,8 @@ public class CurrencyPanel extends JPanel{
 							factor=4.75;
 							symbol="د.إ";
 							break; //end switch	
-					}
+					}*/
+					
 					
 					//change decimal places to two
 					DecimalFormat df = new DecimalFormat("###,##0.00");
@@ -449,12 +461,12 @@ public class CurrencyPanel extends JPanel{
 					{
 						result=numericAmount*factor;
 						//df.format returns string
-						answer=symbol+" "+df.format(result);
+						answer=symbol+df.format(result);
 					}
 					else {
 						result=numericAmount/factor;
 						//df.format returns string
-						answer="£ "+df.format(result);
+						answer="£"+df.format(result);
 					}
 					
 					//change label holding result to converted answer
