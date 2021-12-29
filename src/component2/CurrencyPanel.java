@@ -9,6 +9,114 @@ public class CurrencyPanel extends JPanel{
 	
 	/*----- declaring  components -------*/
 	
+	/*String array of options for currency options available
+	 * one copy for all object of this class
+	 * final so will be constant
+	 * static so value will be same for all instance */
+	private final static String[] currencyOption = { "JPY","EUR","USD","AUD","CAD","KRW","THB","AED"};
+	private JComboBox<String> currencyComboBox; //option selection box
+	
+	/*Button that will cause conversion action to be performed when clicked*/
+	private JButton convertButton;
+	private JLabel resultValue; //for converted result
+	private JTextField inputData; //area for user input
+	/*additonal button to clear back to start look*/
+	private JButton resetButton;
+	/*additional label displaying counting total number of conversions performed */
+	private JLabel countLabel;
+	/*integer vaiable to store total conversions initially zero*/
+	private int conversionCount=0;
+	/*additional checkbox for switching between reverse and normal conversion*/
+	private JCheckBox reverseBox;
+	
+	
+	
+	/*----- Default constructor -------
+	 * to design and add all components to panel
+	 * this will be added to frame in Converter.java */
+	public CurrencyPanel()
+	{
+		/*add String array to combobox*/
+		currencyComboBox = new JComboBox<String>(currencyOption);
+		//add tooltip 
+		currencyComboBox.setToolTipText("Select from list of currency option available");
+		
+		/*JLabel to instruct user to input  value*/
+		JLabel inputLabel = new JLabel("Enter value:");
+		inputLabel.setToolTipText("Message to enter amount to be converted");
+		
+		/*Button that will cause conversion action to be performed when clicked*/
+		convertButton = new JButton("Convert");
+		convertButton.setToolTipText("press to convert entered currency amount");
+		
+		/*result of calculation will be blank --- by default*/
+		resultValue = new JLabel("---");
+		resultValue.setToolTipText("Result of the conversion");
+		
+		/*JTextField with 5 columns 
+		 * user input value in this field*/
+		inputData = new JTextField(5);
+		inputData.setToolTipText("Enter amount that needs to be converted here" );
+		
+		
+		//additional button to clear
+		resetButton=new JButton ("Reset");
+		resetButton.setToolTipText("press to reset all datas");
+		
+		//setting additional label for counting
+		countLabel=new JLabel("Conversion count : "+conversionCount );
+		countLabel.setToolTipText("Total number of conversions performed");
+		
+		//checkbox to reverse conversion
+		reverseBox=new JCheckBox("reverse conversion");
+		reverseBox.setToolTipText("Converesion done from selected unit to pounds when selected.");
+		
+		
+		/*----- Changing Layout -------*/
+		//create object of panel for layout
+		JPanel innerPanel=new JPanel();
+		innerPanel.setPreferredSize(new Dimension (300, 180));
+		innerPanel.setBackground(new Color(137, 181, 217));
+		//use borderlayout for this panel
+		innerPanel.setLayout(new BorderLayout());
+		
+				
+		//panel that will be inside innerPanel
+		JPanel innerPanel2=new  JPanel();
+		innerPanel2.setPreferredSize(new Dimension (300, 100));
+		innerPanel2.setBackground(new Color(137, 181, 217));
+				
+				
+		//color of components bg
+		inputLabel.setBackground(new Color(137, 181, 217));
+		convertButton.setBackground(new Color(137, 181, 217));
+		resultValue.setBackground(new Color(137, 181, 217));
+		resetButton.setBackground(new Color(137, 181, 217));
+		countLabel.setBackground(new Color(137, 181, 217));
+		reverseBox.setBackground(new Color(137, 181, 217));
+			
+		/*----- Add Components for CurrencyPanel -------*/
+		//add inner panel to currencyPanel
+		add(innerPanel);
+		//add components in order to be displayed in innerPaneel
+		innerPanel.add(currencyComboBox, BorderLayout.NORTH);
+		innerPanel.add(inputLabel, BorderLayout.WEST);
+		innerPanel.add(inputData, BorderLayout.CENTER);
+		innerPanel.add(resultValue, BorderLayout.EAST);
+		//add another panel in south
+		innerPanel.add(innerPanel2, BorderLayout.SOUTH);
+		//add components to innerPanel2
+		innerPanel2.add(convertButton);
+		innerPanel2.add(resetButton);
+		innerPanel2.add(countLabel);
+		innerPanel2.add(reverseBox);
+				
+		//appearance of CurrencyPanel
+		setPreferredSize(new Dimension(500, 200));
+		setBackground(new Color(137, 181, 217));
+	}
+	
+	
 	
 	
 	//method defination to design and return menu
