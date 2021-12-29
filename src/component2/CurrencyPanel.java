@@ -6,6 +6,15 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
 
 //inherits built-in JFrame class
 public class CurrencyPanel extends JPanel{
@@ -14,9 +23,8 @@ public class CurrencyPanel extends JPanel{
 	
 	/*String array of options for currency options available
 	 * one copy for all object of this class
-	 * final so will be constant
 	 * static so value will be same for all instance */
-	private final static String[] currencyOption = { "JPY","EUR","USD","AUD","CAD","KRW","THB","AED"};
+	private static String[] currencyOption = { "JPY","EUR","USD","AUD","CAD","KRW","THB","AED"};
 	private JComboBox<String> currencyComboBox; //option selection box
 	
 	/*Button that will cause conversion action to be performed when clicked*/
@@ -33,14 +41,16 @@ public class CurrencyPanel extends JPanel{
 	private JCheckBox reverseBox;
 	/*will be set true if reverse option is selected*/
 	private boolean checked=false;
+	//object of File with default file name as parameter
+	private File currencyFile=new File("currency.txt");
 	
-	
-	
+
 	/*----- Default constructor -------
 	 * to design and add all components to panel
 	 * this will be added to frame in Converter.java */
 	public CurrencyPanel()
 	{
+		 loadCurrencyFile(currencyFile);
 		/*add String array to combobox*/
 		currencyComboBox = new JComboBox<String>(currencyOption);
 		//add tooltip 
@@ -78,7 +88,8 @@ public class CurrencyPanel extends JPanel{
 		reverseBox=new JCheckBox("reverse conversion");
 		reverseBox.setToolTipText("Converesion done from selected unit to pounds when selected.");
 		
-		/*-------Adding ActionListener to components----*/
+		/*----------------Listeners---------------
+		 * event handler definations for certain actions*/
 		
 		//for converting amount and incrementing conversionCount 
 		ConvertListener convertAmount=new ConvertListener();
@@ -140,10 +151,125 @@ public class CurrencyPanel extends JPanel{
 		setBackground(new Color(137, 181, 217));
 	}
 	
+	//method for loading currency file
+	public void loadCurrencyFile(File file)
+	{
+		//exception handling
+		try {
+			//FileInputStream reads data in bytes from UTF8 file in parameter; filereader not used
+			//InputStreamReader decodes the byte to character
+			//BufferReader to read text from character stream; faster than scanner
+			BufferedReader inReader = new BufferedReader(new InputStreamReader(new FileInputStream(currencyFile), "UTF8"));
+			
+			//reads single line
+			String line = inReader.readLine();
+			
+			//using arraylist instead since array object will be fixed size and can get messy
+			/*list of Object of class Currency
+			 * will store all valid currency data from txt file*/
+			List<Currency> currencies = new ArrayList<Currency>();
+//			Currency[] currencies= new Currency[8];
+			
+			//for storing error details of txt files
+			String errorMsg="";
+			//flag to check if txt file validation fails
+			boolean valid=true;
+			//loop till there is line available
+			while ( line != null ) {
+				/*split line using , as delimiter
+				 * and save split data in array*/
+				String [] splitLine = line.split(",");
+				
+				//check if 3 required data for each currency is present
+				if(splitLine.length!=3)
+				{
+					errorMsg+="The field delimiter may be missing or some data itself missing or wrong delimiter used in \n"+ line+"\n\\n";
+				}
+				else //checking further error when there is 3 array elements
+				{
+					//for storing retrived data
+					String name, rate,sign;
+					double factor = 0.0;
+					//removing white spaces from each data
+					name=splitLine[0].trim();
+					rate=splitLine[1].trim();
+					sign=splitLine[2].trim();
+					
+					//check if data was empty 
+					if(name.isEmpty() && rate.isEmpty() && sign.isEmpty())
+					{
+						errorMsg+="Value Missing in "+line+"\n";
+					}
+					else //if 3 data are present
+					{
+						//further validation
+						//check if conversion factor are in proper format
+						try {
+							//convert string to double
+							factor=Double.parseDouble(rate);
+						}
+						catch(NumberFormatException e)
+						{
+							//add error message
+							errorMsg+="Conversion factor not in proper format in "+ line+"\n\\n";
+							valid=false;
+						}
+						//exception handling while extracting abbrevation
+						try{
+							//extract abbrevation from name
+							//start index from after ( and end index is same of ) as it is exclusive
+							name = name.substring(name.indexOf("(") + 1, name.indexOf(")"));
+						}
+						catch (Exception e)
+						{
+							//add error message
+							errorMsg+="Currency name format invalid in  "+ line+"\n\\n";
+							valid=false;
+						}
+					
+					}
+					
+					/*-------after all validation tests are passed--------*/
+					if(valid)
+					{
+						currencies.add(new Currency(name, factor, sign));
+					}
+				}
+
+                // read next line (if available)
+                line = inReader.readLine();  
+            }
+            inReader.close();//close bufferReader
+            
+            //show details about if any line in txt file was corrupted
+            if(errorMsg!="")
+            {
+            	JOptionPane.showMessageDialog(new JFrame(),errorMsg,"Error in txt file!", JOptionPane.ERROR_MESSAGE);
+            }
+            
+		}
+		catch(FileNotFoundException e)
+		{
+			//JOptionPane class used to pop up a message dialogue box
+			JOptionPane.showMessageDialog(new JFrame(),"Currency Conversion Rate file is not attached."," File Not Found!",JOptionPane.ERROR_MESSAGE);
+		}
+		catch(IOException e)
+		{
+			//JOptionPane class used to pop up a message dialogue box
+			JOptionPane.showMessageDialog(new JFrame(),"Error in reading the file."," Error!",JOptionPane.ERROR_MESSAGE);
+			
+		}
+		catch(Exception e)
+		{
+			String message= e.getMessage();
+			//JOptionPane class used to pop up a message dialogue box
+			JOptionPane.showMessageDialog(new JFrame(),message,"Error!", JOptionPane.ERROR_MESSAGE);
+		}
+
+	}
 	
 	//method defination to design and return menu
 	public JMenuBar setupMenu() {
-		
 		/*instance of JMenuBar
 		 * that will be used to display menu bar on the frame*/
 		JMenuBar menuBar = new JMenuBar();
@@ -174,18 +300,23 @@ public class CurrencyPanel extends JPanel{
 		JMenuItem exitMenu = new JMenuItem("Exit");
 		//to show purpose of application
 		JMenuItem aboutMenu=new JMenuItem("About");
+		//to load file
+		JMenuItem loadMenu=new JMenuItem("Load");
 		
 		//add image icon to JMenuItem
 		exitMenu.setIcon(new ImageIcon("exiticon.png"));
 		aboutMenu.setIcon(new ImageIcon("abouticon.png"));
+		loadMenu.setIcon(new ImageIcon("loadicon.png"));
 				
 		//set Mnemonic forJMenuItem
 		exitMenu.setMnemonic(KeyEvent.VK_X);//for Exit
 		aboutMenu.setMnemonic(KeyEvent.VK_A); //for About
+		loadMenu.setMnemonic(KeyEvent.VK_L);//for Load
 				
 		//add tooltips to JMenuItem
 		exitMenu.setToolTipText("Closes the application");
 		aboutMenu.setToolTipText("Gives information about the application");
+		loadMenu.setToolTipText("To load file for currency rates into the application");
 		
 		/*----------- Dialogue box------------*/
 		/* JOptionPane class used to pop up a dialogue box
@@ -213,10 +344,26 @@ public class CurrencyPanel extends JPanel{
 			JOptionPane.showMessageDialog(new JFrame(),aboutMessage);
 		});
 		
+		/*File Chooser Box when Load is selected*/
+		loadMenu.addActionListener(e ->{
+			//file chooser component for loading currency file
+			JFileChooser chooser=new JFileChooser();
+			//show dialog box to open a file
+			int status = chooser.showOpenDialog(null);
+			//if user selects a file
+			if(status == JFileChooser.APPROVE_OPTION)
+			{
+				//change file name to selected file name
+				currencyFile=chooser.getSelectedFile();
+				loadCurrencyFile(currencyFile);
+			}
+		});
+		
 		/*--------- Add---------*/
 		/*add JMenuItem to JMenu 
 		 * to show as pull down menu*/
 		fileMenu.add(exitMenu);
+		fileMenu.add(loadMenu);
 		helpMenu.add(aboutMenu);
 		
 		//add JMenu on JMenuBar
@@ -294,7 +441,7 @@ public class CurrencyPanel extends JPanel{
 					}
 					
 					//change decimal places to two
-					DecimalFormat df = new DecimalFormat("0.00");
+					DecimalFormat df = new DecimalFormat("###,##0.00");
 					
 					String answer;
 					//in case reverse button is not selected

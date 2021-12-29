@@ -7,6 +7,22 @@ public class Currency {
 	private String name, symbol;
 	private double factor;
 	
+	//default constructor
+	public Currency()
+	{
+		name="";
+		factor=0.0;
+		symbol="";
+		
+	}
+	//parameterized constructor
+	public Currency(String name, double factor, String symbol)
+	{
+			this.name=name;
+			this.factor=factor;
+			this.symbol=symbol;
+	}
+	
 	//setters
 	public void setName(String name) {
 		this.name = name;
