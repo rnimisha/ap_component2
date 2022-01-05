@@ -46,11 +46,16 @@ public class CurrencyPanel extends JPanel{
 	private JLabel countLabel;
 	/*additional checkbox for switching between reverse and normal conversion*/
 	private JCheckBox reverseBox;
+	//label to tell what to convert from
+	private JLabel convertDescription;
 	
 	/*integer vaiable to store total conversions initially zero*/
 	private int conversionCount=0;
 	/*will be set true if reverse option is selected*/
 	private boolean checked=false;
+	
+	/*JLabel to instruct user to input  value*/
+	private JLabel inputDescription;
 	
 	
 	/*----------------- Default constructor -------------------
@@ -64,11 +69,12 @@ public class CurrencyPanel extends JPanel{
 		/*--------- JComboBox --------*/
 		//combobox is populated when loadCurrencyFile is called
 		currencyComboBox.setToolTipText("Select from list of currency option available");//add tooltip 
+		
 
 		/*--------- JLabel --------*/
 		/*JLabel to instruct user to input  value*/
-		JLabel inputLabel = new JLabel("Enter Amount:");
-		inputLabel.setToolTipText("Message to enter amount to be converted");
+		inputDescription = new JLabel("Enter £ Amount");
+		inputDescription.setToolTipText("Message to enter amount to be converted");
 		/*result of calculation will be blank --- by default*/
 		resultValue = new JLabel("---");
 		resultValue.setToolTipText("Result of the conversion");
@@ -77,11 +83,14 @@ public class CurrencyPanel extends JPanel{
 		//setting additional label for counting
 		countLabel=new JLabel("Conversion count : "+conversionCount );
 		countLabel.setToolTipText("Total number of conversions performed");
+		//let user know what conversion to perform
+		convertDescription=new JLabel("Convert Pounds to ");
+		convertDescription.setToolTipText("Conversion direction");
 		
 		/*--------- JTextField --------*/
 		/*JTextField with 5 columns 
 		 * user input value in this field*/
-		enteredAmount = new JTextField(5);
+		enteredAmount = new JTextField(8);
 		enteredAmount.setToolTipText("Enter amount that needs to be converted here" );
 		
 		/*--------- JButton --------*/
@@ -97,7 +106,7 @@ public class CurrencyPanel extends JPanel{
 		
 		/*--------- JCheckBox --------*/
 		//checkbox to reverse conversion
-		reverseBox=new JCheckBox("reverse conversion");
+		reverseBox=new JCheckBox("Reverse Conversion");
 		reverseBox.setToolTipText("Converesion done from selected unit to pounds when selected.");
 		
 		/*----------------Listeners---------------
@@ -118,24 +127,48 @@ public class CurrencyPanel extends JPanel{
 		resetButton.addActionListener(e ->{
 			clearValues(); //call method to reset 
 		});
+		//actionlistener that will change label to tell what unit currency to enter
+		currencyComboBox.addActionListener(new LabelListener());
 		
 		
 		/*----- Changing Layout -------*/
 		//create object of panel for layout
 		JPanel innerPanel=new JPanel();
-		innerPanel.setPreferredSize(new Dimension (300, 190));
+		innerPanel.setPreferredSize(new Dimension (300, 240));
 		innerPanel.setBackground(new Color(237, 216, 199));
 		//use borderlayout for this panel
 		innerPanel.setLayout(new BorderLayout(10,10));
 				
 		//panel that will be inside innerPanel
 		JPanel innerPanel2=new  JPanel();
-		innerPanel2.setPreferredSize(new Dimension (300, 100));
+		innerPanel2.setPreferredSize(new Dimension (100, 100));
 		innerPanel2.setBackground(new Color(237, 216, 199));
-				
-				
+		
+		//panel for comboBox related component
+		JPanel comboPanel=new JPanel();
+		comboPanel.setPreferredSize(new Dimension (140, 70));
+		comboPanel.setBackground(new Color(237, 216, 199));
+		//adding to this panel
+		comboPanel.add(convertDescription);
+		comboPanel.add(currencyComboBox);
+		
+		//panel for entering amount related component
+		JPanel inputPanel=new JPanel();
+		inputPanel.setPreferredSize(new Dimension (140, 70));
+		inputPanel.setBackground(new Color(237, 216, 199));
+		inputPanel.add(inputDescription);
+		inputPanel.add(enteredAmount);
+		
+		//panel to add above 2 panel
+		JPanel northPanel=new JPanel();
+		northPanel.setPreferredSize(new Dimension (300, 70));
+		northPanel.setBackground(new Color(237, 216, 199));
+		//adding to this panel
+		northPanel.add(inputPanel);
+		northPanel.add(comboPanel);
+
 		//color of components bg
-		inputLabel.setBackground(new Color(237, 216, 199));
+		inputDescription.setBackground(new Color(237, 216, 199));
 		convertButton.setBackground(new Color(237, 216, 199));
 		resultValue.setBackground(new Color(237, 216, 199));
 		resetButton.setBackground(new Color(237, 216, 199));
@@ -153,10 +186,8 @@ public class CurrencyPanel extends JPanel{
 		add(innerPanel);
 		//add components in order to be displayed in innerPaneel
 		resultValue.setHorizontalAlignment(JLabel.CENTER);
-		innerPanel.add(resultValue, BorderLayout.NORTH);
-		innerPanel.add(inputLabel, BorderLayout.WEST);
-		innerPanel.add(enteredAmount, BorderLayout.CENTER);
-		innerPanel.add(currencyComboBox, BorderLayout.EAST);
+		innerPanel.add(resultValue, BorderLayout.CENTER);
+		innerPanel.add(northPanel, BorderLayout.NORTH);
 		//add another panel in south
 		innerPanel.add(innerPanel2, BorderLayout.SOUTH);
 		//add components to innerPanel2
@@ -166,7 +197,7 @@ public class CurrencyPanel extends JPanel{
 		innerPanel2.add(reverseBox);
 				
 		//appearance of CurrencyPanel
-		setPreferredSize(new Dimension(600, 200));
+		setPreferredSize(new Dimension(600, 250));
 		setBackground(new Color(237, 216, 199));
 		
 		
@@ -200,6 +231,10 @@ public class CurrencyPanel extends JPanel{
 		try {
 			//for storing error details of txt files
 			String errorMsg="";
+			//count line number
+			int lineNumber=1;
+			//removing all elements in array list 
+			currencies.clear();
 			
 			//FileInputStream reads data in bytes from UTF8 file in parameter; filereader not used
 			//InputStreamReader decodes the byte to character
@@ -218,7 +253,7 @@ public class CurrencyPanel extends JPanel{
 				//check if 3 required data for each currency is present
 				if(splitLine.length!=3)
 				{
-					errorMsg+="Incorrect Delimiter format : "+ line+"\n";
+					errorMsg+="Incorrect Delimiter format in line  "+lineNumber+" :  "+ line+"\n";
 				}
 				else //checking further error when there is 3 array elements
 				{
@@ -231,9 +266,17 @@ public class CurrencyPanel extends JPanel{
 					sign=splitLine[2].trim();
 					
 					//check if data was empty 
-					if(name.isEmpty() || rate.isEmpty() || sign.isEmpty())
+					if(name.isEmpty())
 					{
-						errorMsg+="Value Missing : "+line+"\n";
+						errorMsg+="Currency Name Missing in line "+lineNumber+" :  "+line+"\n";
+					}
+					else if(rate.isEmpty())
+					{
+						errorMsg+="Factor Missing in line "+lineNumber+" :  "+line+"\n";
+					}
+					else if(sign.isEmpty())
+					{
+						errorMsg+="Symbol Missing in line "+lineNumber+" :  "+line+"\n";
 					}
 					else //if all 3 data are present
 					{
@@ -254,22 +297,22 @@ public class CurrencyPanel extends JPanel{
 						catch(NumberFormatException e)
 						{
 							//add error message
-							errorMsg+="Incorrect Conversion Factor Format : "+ line+"\n";
+							errorMsg+="Incorrect Conversion Factor Format in line  "+lineNumber+" :  "+ line+"\n";
 						}
 						catch (StringIndexOutOfBoundsException e)
 						{
 							//add error message
-							errorMsg+="Invalid Currency Name Format : "+ line+"\n";
+							errorMsg+="Invalid Currency Name Format in line "+lineNumber+" :  "+ line+"\n";
 						}
 					}
 				}
-
                 // read next line (if available)
                 line = inReader.readLine();  
+                lineNumber++;
             }
             inReader.close();//close bufferReader
             //show details about if any line in txt file was corrupted
-            if(errorMsg!="")
+            if(!errorMsg.isEmpty())
             {
             	JOptionPane.showMessageDialog(new JFrame(),errorMsg,"Some data could not be read!", JOptionPane.WARNING_MESSAGE);
             }
@@ -298,6 +341,7 @@ public class CurrencyPanel extends JPanel{
 	}
 	
 	//method to reset values 
+	/*used method that can be called through action listener since uml diagram in requirement mentions for this method*/
 	public void clearValues()
 	{
 		///clears input box
@@ -399,30 +443,8 @@ public class CurrencyPanel extends JPanel{
 			JOptionPane.showMessageDialog(new JFrame(),aboutMessage);
 		});
 		
-		/*File Chooser Box when Load is selected*/
-		loadMenu.addActionListener(e ->{
-			//file chooser component for loading currency file
-			JFileChooser chooser=new JFileChooser();
-			//title of Choose box
-            chooser.setDialogTitle("Select a .txt file containing Currency Details");
-            //restrict files that can be choosen
-            chooser.setAcceptAllFileFilterUsed(false); //all restricted for now
-            //
-            FileNameExtensionFilter allowedExtension = new FileNameExtensionFilter(".txt Text file", "txt");
-            chooser.addChoosableFileFilter(allowedExtension);
-			//show dialog box to open a file
-			int status = chooser.showOpenDialog(null);
-			//if user selects a file
-			if(status == JFileChooser.APPROVE_OPTION)
-			{
-     			//change file name to selected file name
-				//load the file into the application
-				loadCurrencyFile(chooser.getSelectedFile());
-			}
-			//to inform about loading completion
-			JOptionPane.showMessageDialog(new JFrame(),"Valid Data has been loaded and invalid are discarded","File Loading Completed",JOptionPane.INFORMATION_MESSAGE,new ImageIcon("fileloaded.png"));
-			
-		});
+		/*call action listener for File Chooser Box when Load is selected*/
+		loadMenu.addActionListener(new LoadListener());
 		
 		/*--------- Add---------*/
 		/*add JMenuItem to JMenu 
@@ -523,7 +545,48 @@ public class CurrencyPanel extends JPanel{
 		}
 	}
 	
-	
+	/* defination for LoadListemer
+	 * calls method to load new text file into the system 
+	 * allows user to load file into the system first
+	 * shows load message */
+	public class LoadListener implements ActionListener
+	{
+		//overriding method
+		public void actionPerformed(ActionEvent e) {
+			//file chooser component for loading currency file
+			JFileChooser chooser=new JFileChooser();
+			//title of Choose box
+            chooser.setDialogTitle("Select a .txt file containing Currency Details");
+            //restrict files that can be choosen
+            chooser.setAcceptAllFileFilterUsed(false); //all restricted for now
+            //
+            FileNameExtensionFilter allowedExtension = new FileNameExtensionFilter(".txt Text file", "txt");
+            chooser.addChoosableFileFilter(allowedExtension);
+			//show dialog box to open a file
+			int status = chooser.showOpenDialog(null);
+			//if user selects a file
+			if(status == JFileChooser.APPROVE_OPTION)
+			{
+				//ask user if the file they chose is right one to load
+				int confirmation=JOptionPane.showConfirmDialog(new JFrame(), "Are you sure you want to load"+chooser.getSelectedFile()+" file?", "Confirm Load", JOptionPane.YES_NO_OPTION);
+				//load new file if user chooses yes option
+				if(confirmation==JOptionPane.YES_OPTION)
+				{
+					//load the file into the application
+					loadCurrencyFile(chooser.getSelectedFile());//change file name to selected file name
+					//to inform about loading completion
+					JOptionPane.showMessageDialog(new JFrame(),"Valid Data has been loaded and invalid are discarded","File Loading Completed",JOptionPane.INFORMATION_MESSAGE,new ImageIcon("fileloaded.png"));
+				}
+			}
+			else
+			{
+				//if user cancels file selection
+				JOptionPane.showMessageDialog(new JFrame(), "NO NEW FILE SELECTED"); //message in dialogue box
+			}
+			
+		}
+		
+	}
 	//listener to reverse units that implements ItemListener
 	//when clicked on checkbox
 	public class ReverseListener implements ItemListener
@@ -540,6 +603,10 @@ public class CurrencyPanel extends JPanel{
 			{
 				resetButton.setEnabled(true); //enable reset button
 				checked=true; //reverse checkbox is checked
+				convertDescription.setText("Convert to Pounds "); //change label 
+				//changing instruction label to enter amount
+				String symbol=currencies.get(currencyComboBox.getSelectedIndex()).getSymbol();//Symbol of currency
+				inputDescription.setText("Enter "+symbol+" Amount");
 			}
 			else
 			{
@@ -547,43 +614,36 @@ public class CurrencyPanel extends JPanel{
 				//disable reset button if nothing to reset
 				if(enteredAmount.getText().isEmpty() && resultValue.getText()=="---")
 				{
-					resetButton.setEnabled(false);
+					resetButton.setEnabled(false); //disables button
 				}
+				//change instruction labels
+				convertDescription.setText("Convert Pounds to ");
+				inputDescription.setText("Enter £ Amount");
 			}
 		}
 	}
-	
-	/*actionListener for resetting
-	 * will change all panel component everyting back to default*/
-//	public class ResetListener implements ActionListener
-//	{
-//
-//		@Override 
-//		//overriding to make it perform actions as required 
-//		public void actionPerformed(ActionEvent e) {
-//			
-//			///clears input box
-//			enteredAmount.setText("");
-//			
-//			//clears result label
-//			resultValue.setText("---");
-//			
-//			//set count back to zero
-//			conversionCount=0;
-//			//show changes
-//			countLabel.setText("Conversion count : "+conversionCount );
-//			
-//			//disable clear button
-//			resetButton.setEnabled(false);
-//			
-//			//to uncheck reverse as well
-//			reverseBox.setSelected(false);
-//			
-//			//change combo box option back to default
-//			currencyComboBox.setSelectedIndex(0);
-//			
-//		}
-//		
-//	}
+
+	//action listener that will change instruction label
+	public class LabelListener implements ActionListener
+	{
+		//overriding method
+		public void actionPerformed(ActionEvent e) {
+			//in case of reverse option being choosen
+			if(checked)
+			{
+				//pull symbol of currency that is choosen
+				String symbol=currencies.get(currencyComboBox.getSelectedIndex()).getSymbol();//Symbol of currency
+				inputDescription.setText("Enter "+symbol+" Amount"); //change instruction label
+			}
+			else
+			{
+				//change instruction label to default if reverse option is not selected
+				inputDescription.setText("Enter £ Amount");
+			}
+			
+		}
+		
+	}
+
 
 }

@@ -18,7 +18,7 @@ public class Converter {
 	{
 		//create JFrame object as frame
 		//paramerer passed to set the title of window frame
-		JFrame frame=new JFrame("Currency Converter");
+		JFrame frame=new JFrame("Pounds Converter");
 		//to prevent application from keep running after frame dissppers on clicking x exit
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
